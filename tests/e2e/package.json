@@ -1,0 +1,11 @@
+{
+  "name": "deaddrop-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test --test-concurrency=1 upload.test.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.58.2"
+  }
+}
