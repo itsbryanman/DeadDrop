@@ -1,2 +1,80 @@
 <!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light dark">
 <title>Dead Drop</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/assets/app.css">
+<script src="/assets/app.js" defer></script>
+</head>
+<body>
+<div class="page">
+  <header class="masthead">
+    <span class="mark" aria-hidden="true"></span>
+    <span class="wordmark">Dead Drop</span>
+  </header>
+
+  <main id="main">
+    <noscript>
+      <section class="panel notice">
+        <h1>JavaScript is needed</h1>
+        <p>This page uses a small script to send files. Turn JavaScript on and reopen the original link.</p>
+      </section>
+    </noscript>
+
+    <section id="view-loading" class="view" aria-busy="true">
+      <p class="muted">Connecting…</p>
+    </section>
+
+    <section id="view-blocked" class="view panel notice" hidden>
+      <h1 id="blocked-title" tabindex="-1"></h1>
+      <p id="blocked-detail"></p>
+    </section>
+
+    <section id="view-ready" class="view" hidden>
+      <div class="intro">
+        <h1 id="title" tabindex="-1">Send files</h1>
+        <p id="session-name" class="claimed" hidden>
+          <span id="session-name-text"></span>
+          <span class="tag">name set by the receiver, not verified</span>
+        </p>
+        <p class="muted">Files are saved straight to the computer that shared this link. No account needed.</p>
+      </div>
+
+      <div id="dropzone" class="dropzone">
+        <svg class="dropzone-icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+          <path d="M12 15V4m0 0-4 4m4-4 4 4M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p class="dropzone-title"><span class="when-drag">Drop to send</span><span class="when-idle">Drag files here</span></p>
+        <p class="dropzone-or">or</p>
+        <button id="choose" type="button" class="button">Choose files</button>
+        <input id="file-input" type="file" multiple hidden>
+        <p id="limits" class="dropzone-limits"></p>
+      </div>
+
+      <dl class="meta" aria-label="Session">
+        <div><dt>Closes in</dt><dd id="expires">–</dd></div>
+        <div><dt>Files left</dt><dd id="files-left">–</dd></div>
+        <div><dt>Space left</dt><dd id="space-left">–</dd></div>
+      </dl>
+
+      <section id="queue-section" class="queue-section" hidden>
+        <h2 class="queue-heading">Uploads</h2>
+        <ol id="queue" class="queue"></ol>
+      </section>
+
+      <aside class="notes">
+        <p><strong>Saved isn't the same as checked.</strong> Files aren't scanned for viruses on either end.</p>
+        <p>For privacy, this page has removed the access key from the address bar. To send from another device, use the original link or QR code.</p>
+      </aside>
+    </section>
+  </main>
+
+  <p id="announcer" class="visually-hidden" role="status" aria-live="polite"></p>
+</div>
+</body>
+</html>

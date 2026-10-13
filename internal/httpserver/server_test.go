@@ -126,7 +126,7 @@ func TestShellIsPublicAndGeneric(t *testing.T) {
 func TestSecurityHeaders(t *testing.T) {
 	e := newEnv(t, defaultLimits)
 	for _, p := range []string{"/r", "/api/session", "/nope"} {
-		resp := get(t, e.ts.URL + p)
+		resp := get(t, e.ts.URL+p)
 		resp.Body.Close()
 		h := resp.Header
 		if h.Get("Cache-Control") != "no-store" || h.Get("Referrer-Policy") != "no-referrer" ||
@@ -140,7 +140,7 @@ func TestSecurityHeaders(t *testing.T) {
 func TestUnknownRoutes404(t *testing.T) {
 	e := newEnv(t, defaultLimits)
 	for _, p := range []string{"/", "/r/", "/api", "/assets/", "/assets/../r", "/" + e.sess.ID} {
-		resp := get(t, e.ts.URL + p)
+		resp := get(t, e.ts.URL+p)
 		resp.Body.Close()
 		if resp.StatusCode != 404 {
 			t.Errorf("%s: status %d", p, resp.StatusCode)
@@ -434,7 +434,7 @@ func TestCrossOriginRejected(t *testing.T) {
 
 func TestHealthz(t *testing.T) {
 	e := newEnv(t, defaultLimits)
-	resp := get(t, e.ts.URL + "/healthz")
+	resp := get(t, e.ts.URL+"/healthz")
 	resp.Body.Close()
 	if resp.StatusCode != 200 {
 		t.Fatalf("loopback: %d", resp.StatusCode)
