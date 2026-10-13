@@ -30,6 +30,7 @@ const shutdownGrace = 10 * time.Second
 func receive(opts cli.ReceiveOptions, stdout, stderr *os.File) int {
 	out := terminal.New(stdout, stderr, opts.JSON)
 
+	ignoreBrokenPipe()
 	ctx, stopSignals := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stopSignals()
 

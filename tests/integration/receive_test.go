@@ -39,6 +39,7 @@ func TestMain(m *testing.M) {
 type proc struct {
 	t      *testing.T
 	cmd    *exec.Cmd
+	stdout io.ReadCloser
 	events chan map[string]any
 	exit   chan int
 	link   string
@@ -57,7 +58,7 @@ func start(t *testing.T, extra ...string) *proc {
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
-	p := &proc{t: t, cmd: cmd, events: make(chan map[string]any, 100), exit: make(chan int, 1), dir: dir}
+	p := &proc{t: t, cmd: cmd, stdout: stdout, events: make(chan map[string]any, 100), exit: make(chan int, 1), dir: dir}
 	go func() {
 		sc := bufio.NewScanner(stdout)
 		for sc.Scan() {
@@ -241,6 +242,32 @@ func TestInterruptDuringUploadRemovesPartial(t *testing.T) {
 	if _, err := os.Stat(dirs[0]); !os.IsNotExist(err) {
 		es, _ := os.ReadDir(dirs[0])
 		t.Fatalf("session dir should be gone, has %v", es)
+	}
+}
+
+// A pipeline like `deaddrop receive --json | jq` loses its reader on
+// Ctrl+C. Shutdown must still clean up instead of dying on SIGPIPE.
+func TestInterruptWithClosedStdout(t *testing.T) {
+	p := start(t)
+	conn, err := net.Dial("tcp", strings.TrimPrefix(p.base, "http://"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	conn.Write([]byte("POST /api/upload HTTP/1.1\r\nHost: x\r\nAuthorization: Bearer " + p.token +
+		"\r\nX-File-Name: piped.bin\r\nContent-Length: 10000000\r\n\r\n"))
+	conn.Write(make([]byte, 1<<20))
+	p.waitEvent("upload_started")
+	dirs := sessionDirs(t, p.dir)
+
+	p.stdout.Close()
+	p.cmd.Process.Signal(os.Interrupt)
+	if code := p.waitExit(); code != 0 {
+		t.Fatalf("exit %d (killed by a signal if -1)", code)
+	}
+	if _, err := os.Stat(dirs[0]); !os.IsNotExist(err) {
+		es, _ := os.ReadDir(dirs[0])
+		t.Fatalf("partial upload left behind: %v", es)
 	}
 }
 
