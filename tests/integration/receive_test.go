@@ -1,6 +1,5 @@
 //go:build unix
 
-// Package integration runs the built deaddrop binary as a subprocess.
 package integration
 
 import (
