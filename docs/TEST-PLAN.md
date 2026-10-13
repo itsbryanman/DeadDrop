@@ -50,17 +50,26 @@
 
 ## Manual, before tagging a release
 
+Linux results below are from a run on an XFCE desktop with real Firefox
+140 and Chromium 152 windows driven by mouse and keyboard, a dummy LAN
+interface, and a bandwidth-limited proxy to slow transfers down.
+
 | Check | Linux | macOS | Windows |
 |---|---|---|---|
-| `deaddrop receive` picks the right Wi-Fi/Ethernet address | | | |
+| `deaddrop receive` picks the right Wi-Fi/Ethernet address | ✓ (skips docker/libvirt/tailscale) | | |
 | Phone on the same Wi-Fi scans the QR and uploads a photo | | | |
 | iOS Safari and Android Chrome file pickers | | | |
-| Drag and drop in Firefox, Safari, Chrome | | | |
-| Dropping a folder shows the zip hint | | | |
-| 2 GiB upload completes; progress is smooth | | | |
+| Drag and drop in Firefox, Safari, Chrome | ✓ Firefox, Chromium (from Thunar) | | |
+| Dropping a folder shows the zip hint | ✓ | | |
+| 2 GiB upload completes; progress is smooth | ✓ 1 GiB, byte-identical | | |
 | Wi-Fi drops mid-upload: partial removed, retry works | | | |
-| `--tunnel cloudflare` from a phone on mobile data | | | |
-| Ctrl+C during a tunnel session leaves no `cloudflared` behind | | | |
+| `--tunnel cloudflare` from a phone on mobile data | ✓ desktop browser over the tunnel | | |
+| Ctrl+C during a tunnel session leaves no `cloudflared` behind | ✓ (unrelated cloudflared untouched) | | |
 | `--dir` on an exFAT USB stick (copy fallback) | | | |
 | Screen reader announces queued and saved files | | | |
-| QR is readable on light and dark terminal themes | | | |
+| QR is readable on light and dark terminal themes | ✓ decodes from a raw xfce4-terminal screenshot | | |
+| Two browsers at once: second waits, then sends | ✓ | | |
+| Closing the tab mid-upload warns, then cleans up | ✓ | | |
+| Ctrl+C mid-upload, including with stdout piped | ✓ | | |
+| Pasting the link into a tab already on /r | ✓ | | |
+| Keyboard only: Tab to "Choose files", Enter opens picker | ✓ | | |

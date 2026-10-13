@@ -152,6 +152,9 @@ receiver runs. Accepted names are NFC-normalised.
 1. The session is marked closed and any active upload's context is
    cancelled.
 2. Signal handling is reset, so a second Ctrl+C kills the process at once.
+   SIGPIPE is ignored for the whole run: in `deaddrop receive --json | jq`,
+   Ctrl+C also stops `jq`, and without this the next write to stdout would
+   kill deaddrop before it removed in-progress uploads.
 3. `http.Server.Shutdown` waits up to 10 seconds for handlers to finish.
 4. Any partial files left over are removed.
 5. `cloudflared` gets SIGTERM to its process group (`taskkill /T` by PID on
