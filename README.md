@@ -119,8 +119,8 @@ See [docs/SECURITY.md](docs/SECURITY.md) for the full threat model.
 ## Platforms
 
 Linux (amd64, arm64), macOS (Intel, Apple Silicon) and Windows (amd64).
-CI runs the unit tests on all three. The subprocess integration tests and
-browser tests run on Linux and macOS.
+CI runs the unit tests on all three, the subprocess integration tests on
+Linux and macOS, and the browser tests on Linux.
 
 ## Development
 
