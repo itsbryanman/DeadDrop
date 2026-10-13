@@ -21,6 +21,7 @@ import (
 type Printer struct {
 	mu       sync.Mutex
 	out      io.Writer
+	errOut   io.Writer // text-mode errors; JSON mode keeps everything on out
 	json     bool
 	tty      bool
 	color    bool
@@ -28,21 +29,22 @@ type Printer struct {
 	lastDraw time.Time
 }
 
-// New writes to out. TTY features (progress line, QR colours) are enabled
-// only when out is a terminal.
-func New(out *os.File, jsonMode bool) *Printer {
+// New writes to out, and text-mode errors to errOut. TTY features
+// (progress line, QR colours) are enabled only when out is a terminal.
+func New(out, errOut *os.File, jsonMode bool) *Printer {
 	tty := isTerminal(out)
 	return &Printer{
-		out:   out,
-		json:  jsonMode,
-		tty:   tty && !jsonMode,
-		color: tty && os.Getenv("NO_COLOR") == "" && os.Getenv("TERM") != "dumb",
+		out:    out,
+		errOut: errOut,
+		json:   jsonMode,
+		tty:    tty && !jsonMode,
+		color:  tty && os.Getenv("NO_COLOR") == "" && os.Getenv("TERM") != "dumb",
 	}
 }
 
 // NewWriter is for tests and pipes: no TTY features.
 func NewWriter(out io.Writer, jsonMode bool) *Printer {
-	return &Printer{out: out, json: jsonMode}
+	return &Printer{out: out, errOut: out, json: jsonMode}
 }
 
 // Banner describes a started session.
@@ -140,9 +142,9 @@ func (p *Printer) Error(msg, hint string) {
 		return
 	}
 	p.clearProgress()
-	fmt.Fprintf(p.out, "%s %s\n", p.red("error:"), msg)
+	fmt.Fprintf(p.errOut, "%s %s\n", p.red("error:"), msg)
 	if hint != "" {
-		fmt.Fprintf(p.out, "  %s\n", hint)
+		fmt.Fprintf(p.errOut, "  %s\n", hint)
 	}
 }
 
