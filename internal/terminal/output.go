@@ -10,8 +10,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"unicode/utf8"
 
+	"golang.org/x/text/width"
 	"rsc.io/qr"
 
 	"github.com/itsbryanman/DeadDrop/internal/units"
@@ -169,6 +169,10 @@ func (p *Printer) Summary(reason string, files int, bytes int64, dir string) {
 		return
 	}
 	p.clearProgress()
+	if p.tty {
+		// wipe the "^C" the terminal echoed so the summary starts cleanly
+		fmt.Fprint(p.out, "\r\x1b[K")
+	}
 	head := "Session ended."
 	if reason == "expired" {
 		head = "Session expired."
@@ -283,14 +287,39 @@ func (p *Printer) red(s string) string    { return p.style("31", s) }
 func (p *Printer) green(s string) string  { return p.style("32", s) }
 func (p *Printer) yellow(s string) string { return p.style("33", s) }
 
-// pad truncates or pads s to width runes.
-func pad(s string, width int) string {
-	n := utf8.RuneCountInString(s)
-	if n > width {
-		r := []rune(s)
-		return string(r[:width-1]) + "…"
+// pad truncates or pads s to cols terminal columns. East Asian wide and
+// fullwidth characters take two columns.
+func pad(s string, cols int) string {
+	if w := displayWidth(s); w <= cols {
+		return s + strings.Repeat(" ", cols-w)
 	}
-	return s + strings.Repeat(" ", width-n)
+	var b strings.Builder
+	used := 0
+	for _, r := range s {
+		w := runeWidth(r)
+		if used+w > cols-1 {
+			break
+		}
+		b.WriteRune(r)
+		used += w
+	}
+	return b.String() + "…" + strings.Repeat(" ", cols-1-used)
+}
+
+func displayWidth(s string) int {
+	n := 0
+	for _, r := range s {
+		n += runeWidth(r)
+	}
+	return n
+}
+
+func runeWidth(r rune) int {
+	switch width.LookupRune(r).Kind() {
+	case width.EastAsianWide, width.EastAsianFullwidth:
+		return 2
+	}
+	return 1
 }
 
 func humanDuration(d time.Duration) string {
@@ -321,7 +350,9 @@ func RenderQR(url string, color bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	const quiet = 2
+	// The QR spec asks for a four-module light border; scanners struggle
+	// when the terminal's dark background sits right against the code.
+	const quiet = 4
 	n := code.Size
 	dark := func(x, y int) bool {
 		if x < 0 || y < 0 || x >= n || y >= n {
@@ -333,7 +364,9 @@ func RenderQR(url string, color bool) (string, error) {
 	for y := -quiet; y < n+quiet; y += 2 {
 		b.WriteString("  ")
 		if color {
-			b.WriteString("\x1b[30;47m")
+			// bright white (107): plain white (47) renders as mid grey in
+			// many terminal palettes, which costs scanner contrast
+			b.WriteString("\x1b[30;107m")
 		}
 		for x := -quiet; x < n+quiet; x++ {
 			top, bot := dark(x, y), dark(x, y+1)

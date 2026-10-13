@@ -76,6 +76,13 @@ func TestPad(t *testing.T) {
 	if got := pad("abcdefgh", 5); got != "abcd…" {
 		t.Errorf("%q", got)
 	}
+	// wide characters count as two columns
+	if got := pad("日本.jpg", 10); got != "日本.jpg  " {
+		t.Errorf("%q", got)
+	}
+	if got := pad("日本語の写真.jpg", 8); got != "日本語… " || displayWidth(got) != 8 {
+		t.Errorf("%q (width %d)", got, displayWidth(got))
+	}
 }
 
 // TestRenderQRRoundTrip decodes the rendered glyphs back into modules and
@@ -88,9 +95,9 @@ func TestRenderQRRoundTrip(t *testing.T) {
 	}
 	for _, color := range []bool{false, true} {
 		out, _ := RenderQR(url, color)
-		out = strings.NewReplacer("\x1b[30;47m", "", "\x1b[0m", "").Replace(out)
+		out = strings.NewReplacer("\x1b[30;107m", "", "\x1b[0m", "").Replace(out)
 		rows := strings.Split(strings.TrimRight(out, "\n"), "\n")
-		const quiet = 2
+		const quiet = 4
 		for ri, row := range rows {
 			cells := []rune(strings.TrimPrefix(row, "  "))
 			for ci, c := range cells {
