@@ -1,0 +1,6 @@
+/bin/
+/dist/
+*.test
+*.out
+node_modules/
+tests/e2e/test-results/
