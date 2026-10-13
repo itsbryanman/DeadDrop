@@ -39,9 +39,10 @@ type Options struct {
 type Tunnel struct {
 	PublicURL string
 
-	cmd  *exec.Cmd
-	done chan struct{}
-	err  error
+	cmd     *exec.Cmd
+	done    chan struct{}
+	err     error
+	logDone chan struct{}
 
 	logMu sync.Mutex
 	log   []string
@@ -82,7 +83,7 @@ func Start(ctx context.Context, opt Options) (*Tunnel, error) {
 	}
 	pw.Close()
 
-	t := &Tunnel{cmd: cmd, done: make(chan struct{})}
+	t := &Tunnel{cmd: cmd, done: make(chan struct{}), logDone: make(chan struct{})}
 	go func() {
 		t.err = cmd.Wait()
 		close(t.done)
@@ -133,6 +134,7 @@ func Start(ctx context.Context, opt Options) (*Tunnel, error) {
 }
 
 func (t *Tunnel) readLog(r io.ReadCloser, found chan<- string) {
+	defer close(t.logDone)
 	defer r.Close()
 	sc := bufio.NewScanner(r)
 	sc.Buffer(make([]byte, 64<<10), 1<<20)
@@ -154,8 +156,13 @@ func (t *Tunnel) readLog(r io.ReadCloser, found chan<- string) {
 	}
 }
 
-// tail formats the last cloudflared log lines for an error message.
+// tail formats the last cloudflared log lines for an error message. It
+// gives the reader a moment to drain output written just before exit.
 func (t *Tunnel) tail() string {
+	select {
+	case <-t.logDone:
+	case <-time.After(time.Second):
+	}
 	t.logMu.Lock()
 	defer t.logMu.Unlock()
 	if len(t.log) == 0 {

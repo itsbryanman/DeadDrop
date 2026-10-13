@@ -143,7 +143,7 @@ func (s *Session) Snapshot() Snapshot {
 		CompletedFiles: s.completedFiles,
 		CompletedBytes: s.completedBytes,
 		Busy:           s.reservedFiles > 0,
-		Closed:         s.closed,
+		Closed:         s.closed || s.ctx.Err() != nil,
 	}
 }
 
@@ -163,7 +163,9 @@ func (s *Session) Admit(declared int64) (*Ticket, error) {
 		<-s.slot
 		return nil, err
 	}
-	if s.closed {
+	// The deadline's AfterFunc sets closed asynchronously; check the
+	// context too so an expired session never admits another upload.
+	if s.closed || s.ctx.Err() != nil {
 		return fail(ErrClosed)
 	}
 	if s.completedFiles+s.reservedFiles >= s.Limits.MaxUploads {
