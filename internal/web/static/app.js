@@ -221,7 +221,7 @@
     if (closed || !session) return;
     els.queueSection.hidden = false;
     (folderNames || []).forEach(function (name) {
-      addItem({ name: name, size: 0 }, 'rejected', 'Folders can’t be sent. Zip the folder and send the .zip instead.');
+      addItem({ name: name, size: -1 }, 'rejected', 'Folders can’t be sent. Zip the folder and send the .zip instead.');
     });
     var added = 0;
     for (var i = 0; i < files.length; i++) {
@@ -252,7 +252,7 @@
       '<progress max="100" value="0" hidden></progress>' +
       '<div class="item-actions" hidden><button type="button" class="link-button">Try again</button></div>';
     li.querySelector('.item-name').textContent = file.name;
-    li.querySelector('.item-size').textContent = formatSize(file.size);
+    li.querySelector('.item-size').textContent = file.size >= 0 ? formatSize(file.size) : '';
     li.querySelector('progress').setAttribute('aria-label', 'Upload progress for ' + file.name);
     li.querySelector('.link-button').addEventListener('click', function () { retry(it); });
     it.el = li;
@@ -345,6 +345,8 @@
           render();
         }
         finish();
+        // other senders may have uploaded too; pick up the real counters
+        loadSession(false);
         return;
       }
       var err = parseError(xhr);
@@ -478,6 +480,13 @@
   }
 
   // ---------- start ----------
+
+  // Pasting the full link into a tab already showing /r only changes the
+  // fragment, which browsers treat as same-page navigation: the script would
+  // not rerun and the key would sit in the address bar. Start over instead.
+  window.addEventListener('hashchange', function () {
+    if (location.hash.length > 1) location.reload();
+  });
 
   function start() {
     if (!token) {

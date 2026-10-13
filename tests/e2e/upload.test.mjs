@@ -112,6 +112,23 @@ test('explains a missing or wrong key', async () => {
   }
 });
 
+test('recovers when the full link is pasted into a tab already on /r', async () => {
+  const drop = startDrop();
+  try {
+    const { link } = await drop.waitFor('session_started');
+    const page = await browser.newPage();
+    await page.goto(link.split('#')[0]);
+    await page.waitForSelector('#view-blocked:not([hidden])');
+    // same path, new fragment: browsers don't reload for this on their own
+    await page.evaluate((l) => { location.href = l; }, link);
+    await page.waitForSelector('#view-ready:not([hidden])');
+    assert.ok(!page.url().includes('#'), 'fragment should be removed again');
+    await page.close();
+  } finally {
+    await drop.stop();
+  }
+});
+
 test('rejects oversized files before sending them', async () => {
   const drop = startDrop('--max-file', '1KiB');
   try {
